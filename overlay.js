@@ -1,34 +1,32 @@
 (function () {
   'use strict';
 
-  var LANG_KEY  = 'rc2_lang';
-  var TOKEN_KEY = 'rc_acct_token';
-  var USER_KEY  = 'rc_acct_user';
-  var DAYS_KEY  = 'rc_acct_days';
-  var UID_KEY   = 'rc_acct_uid';
+  var LANG_KEY    = 'rc2_lang';
+  var TOKEN_KEY   = 'rc_acct_token';
+  var USER_KEY    = 'rc_acct_user';
+  var DAYS_KEY    = 'rc_acct_days';
+  var UID_KEY     = 'rc_acct_uid';
   var CREATED_KEY = 'rc_acct_created';
-  var MIN_DAYS  = 80;
+  var MIN_DAYS    = 80;
 
   function getToken()   { return localStorage.getItem(TOKEN_KEY); }
   function getUser()    { return localStorage.getItem(USER_KEY); }
   function getDays()    { return parseInt(localStorage.getItem(DAYS_KEY) || '0', 10); }
-  function getUid()     { return localStorage.getItem(UID_KEY); }
-  function getCreated() { return localStorage.getItem(CREATED_KEY); }
 
   function saveVerification(id, name, days, created) {
     var arr = new Uint8Array(16);
     crypto.getRandomValues(arr);
     var hex = Array.from(arr).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
     var token = 'RBX-' + id + '-' + hex.toUpperCase();
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY,  name);
-    localStorage.setItem(DAYS_KEY,  String(days));
-    localStorage.setItem(UID_KEY,   String(id));
+    localStorage.setItem(TOKEN_KEY,   token);
+    localStorage.setItem(USER_KEY,    name);
+    localStorage.setItem(DAYS_KEY,    String(days));
+    localStorage.setItem(UID_KEY,     String(id));
     localStorage.setItem(CREATED_KEY, created || '');
     return token;
   }
 
-  /* ── Sound ──────────────────────────────────────────── */
+  /* ── Sound ────────────────────────────────────────── */
   var audio = null;
   function playClick() {
     try {
@@ -38,7 +36,7 @@
     } catch(e){}
   }
 
-  /* ── Discord logs ───────────────────────────────────── */
+  /* ── Discord logs ─────────────────────────────────── */
   function logAccess() {
     if (sessionStorage.getItem('rc_logged_access')) return;
     sessionStorage.setItem('rc_logged_access', '1');
@@ -62,7 +60,7 @@
     }).catch(function(){});
   }
 
-  /* ── Toast warning ──────────────────────────────────── */
+  /* ── Toast warning ────────────────────────────────── */
   var WARN_MSGS = {
     en: 'Verify your Roblox account first to access the game.',
     es: 'Verifica tu cuenta de Roblox primero para acceder al juego.',
@@ -82,7 +80,7 @@
     setTimeout(function(){ warn.remove(); }, 3200);
   }
 
-  /* ── Auto language detection ────────────────────────── */
+  /* ── Auto language detection ──────────────────────── */
   function autoDetectLanguage() {
     if (localStorage.getItem(LANG_KEY)) return;
     fetch('/api/detect-region')
@@ -101,7 +99,6 @@
       .catch(function(){});
   }
 
-  /* ── Language overlay dismiss ───────────────────────── */
   function dismissLangOverlay(lang) {
     localStorage.setItem(LANG_KEY, lang);
     var overlay = document.getElementById('rc-lang-overlay');
@@ -112,82 +109,37 @@
   }
 
   /* ═══════════════════════════════════════════════════
-     PROMO VIDEO SECTION
+     PROMO VIDEO — native browser player, between title
+     and Featured Games section
   ═══════════════════════════════════════════════════ */
-  function injectVideoStyles() {
-    if (document.getElementById('rc-pvs')) return;
-    var s = document.createElement('style');
-    s.id = 'rc-pvs';
-    s.textContent = [
-      '#rc-promo-section{width:100%;background:#020712;position:relative;overflow:hidden;}',
-      '#rc-promo-video{width:100%;display:block;max-height:75vh;object-fit:cover;}',
-      '#rc-promo-overlay{position:absolute;inset:0;background:linear-gradient(0deg,rgba(4,9,19,1) 0%,rgba(4,9,19,0) 30%,rgba(4,9,19,0) 70%,rgba(4,9,19,0.4) 100%);pointer-events:none;}',
-      '#rc-promo-skip{position:absolute;top:16px;right:16px;background:rgba(4,9,19,0.6);border:1px solid rgba(59,130,246,0.3);color:rgba(147,197,253,0.8);font-family:Outfit,Inter,sans-serif;font-size:0.78rem;font-weight:600;padding:6px 14px;border-radius:999px;cursor:pointer;backdrop-filter:blur(8px);transition:all .2s;z-index:10;display:flex;align-items:center;gap:6px;}',
-      '#rc-promo-skip:hover{background:rgba(37,99,235,0.3);border-color:rgba(59,130,246,0.6);color:#93c5fd;}',
-      '#rc-promo-sound{position:absolute;top:16px;left:16px;background:rgba(4,9,19,0.6);border:1px solid rgba(59,130,246,0.3);color:rgba(147,197,253,0.8);font-family:Outfit,Inter,sans-serif;font-size:0.78rem;font-weight:600;padding:6px 14px;border-radius:999px;cursor:pointer;backdrop-filter:blur(8px);transition:all .2s;z-index:10;display:flex;align-items:center;gap:6px;}',
-      '#rc-promo-sound:hover{background:rgba(37,99,235,0.3);border-color:rgba(59,130,246,0.6);color:#93c5fd;}',
-      '@keyframes rc-slidedown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}',
-      '#rc-promo-section{animation:rc-slidedown .4s ease;}',
-    ].join('');
-    document.head.appendChild(s);
-  }
-
-  var SKIP_LABELS  = { en:'Skip', pt:'Pular', es:'Saltar', ru:'\u041f\u0440\u043e\u043f\u0443\u0441\u0442\u0438\u0442\u044c' };
-  var MUTE_LABELS  = { en:'Unmute', pt:'Ativar som', es:'Activar audio', ru:'\u0417\u0432\u0443\u043a' };
-  var MUTED_LABELS = { en:'Muted', pt:'Mudo', es:'Silenciado', ru:'\u0411\u0435\u0437 \u0437\u0432\u0443\u043a\u0430' };
-
-  function createPromoSection(container) {
-    var lang = localStorage.getItem(LANG_KEY) || 'en';
-    injectVideoStyles();
-    var section = document.createElement('div');
-    section.id = 'rc-promo-section';
-    var video = document.createElement('video');
-    video.id = 'rc-promo-video';
-    video.src = '/promo-video.mp4';
-    video.autoplay = true;
-    video.muted = true;
-    video.playsInline = true;
-    video.preload = 'auto';
-    video.setAttribute('playsinline', '');
-    var overlay = document.createElement('div');
-    overlay.id = 'rc-promo-overlay';
-    var skipBtn = document.createElement('button');
-    skipBtn.id = 'rc-promo-skip';
-    skipBtn.innerHTML = (SKIP_LABELS[lang]||'Skip') + ' <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 5l14 7-14 7V5z" fill="currentColor"/><path d="M19 5v14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>';
-    var soundBtn = document.createElement('button');
-    soundBtn.id = 'rc-promo-sound';
-    soundBtn.innerHTML = '&#x1F507; ' + (MUTED_LABELS[lang]||'Muted');
-    function removeSection() {
-      section.style.transition = 'opacity .4s,max-height .5s';
-      section.style.opacity = '0';
-      section.style.maxHeight = section.offsetHeight + 'px';
-      setTimeout(function(){ section.style.maxHeight = '0'; section.style.overflow = 'hidden'; }, 50);
-      setTimeout(function(){ section.remove(); }, 500);
-    }
-    skipBtn.addEventListener('click', function(){ playClick(); removeSection(); });
-    soundBtn.addEventListener('click', function() {
-      playClick();
-      video.muted = !video.muted;
-      soundBtn.innerHTML = video.muted
-        ? ('&#x1F507; ' + (MUTED_LABELS[lang]||'Muted'))
-        : ('&#x1F50A; ' + (MUTE_LABELS[lang]||'Unmute'));
-    });
-    video.addEventListener('ended', removeSection);
-    section.appendChild(video);
-    section.appendChild(overlay);
-    section.appendChild(skipBtn);
-    section.appendChild(soundBtn);
-    container.insertBefore(section, container.firstChild);
-    video.play().catch(function(){});
-  }
-
   var promoInjected = false;
+
   function tryInjectPromo() {
     if (promoInjected) return;
-    var root = document.getElementById('root');
-    if (!root || !root.firstChild) return;
+
+    // Wait until at least one game card is in the DOM
+    var firstCard = document.querySelector('[data-testid^="card-game-"]');
+    if (!firstCard) return;
+
     promoInjected = true;
-    createPromoSection(root);
+
+    // Walk up: card → grid div → section (games section)
+    var gamesSection = firstCard.parentElement;   // grid div
+    if (gamesSection) gamesSection = gamesSection.parentElement; // section wrapper
+    if (!gamesSection || !gamesSection.parentElement) return;
+
+    var wrapper = document.createElement('div');
+    wrapper.id = 'rc-promo-section';
+    wrapper.style.cssText = 'margin-bottom:32px;';
+
+    var video = document.createElement('video');
+    video.id  = 'rc-promo-video';
+    video.src = '/promo-video.mp4';
+    video.controls = true;
+    video.style.cssText = 'width:100%;display:block;border-radius:8px;background:#000;max-height:65vh;';
+
+    wrapper.appendChild(video);
+    gamesSection.parentElement.insertBefore(wrapper, gamesSection);
   }
 
   /* ═══════════════════════════════════════════════════
@@ -225,7 +177,7 @@
     en:{ title:'Account Verification', sub:'To access the games, enter your Roblox username. We will check if your account meets the minimum requirements.', ph:'Your Roblox username', btn:'Verify Account', loading:'Verifying...', hint:'Your account must be at least <strong>80 days</strong> old.', err_empty:'Please enter your Roblox username.', err_nf:'User not found. Check the name and try again.', err_age:'Use another account or wait for your account to get older.\n\nAccount @{name}: {days} day(s). {missing} more day(s) needed to reach the {min}-day requirement.', err_conn:'Connection error. Check your internet and try again.', err_generic:'Error verifying account. Please try again.' },
     pt:{ title:'Verifica\u00e7\u00e3o de Conta', sub:'Para acessar os jogos, informe seu usu\u00e1rio do Roblox. Verificaremos se sua conta atende os requisitos m\u00ednimos.', ph:'Seu usu\u00e1rio do Roblox', btn:'Verificar Conta', loading:'Verificando...', hint:'Sua conta precisa ter no m\u00ednimo <strong>80 dias</strong> de cria\u00e7\u00e3o.', err_empty:'Por favor, informe seu usu\u00e1rio do Roblox.', err_nf:'Usu\u00e1rio n\u00e3o encontrado. Verifique o nome e tente novamente.', err_age:'Utilize outra conta ou aguarde sua conta ficar mais velha.\n\nConta @{name}: {days} dia(s). Faltam {missing} dia(s) para atingir os {min} dias necess\u00e1rios.', err_conn:'Erro de conex\u00e3o. Verifique sua internet e tente novamente.', err_generic:'Erro ao verificar a conta. Tente novamente.' },
     es:{ title:'Verificaci\u00f3n de Cuenta', sub:'Para acceder a los juegos, ingresa tu usuario de Roblox. Verificaremos si tu cuenta cumple los requisitos m\u00ednimos.', ph:'Tu usuario de Roblox', btn:'Verificar Cuenta', loading:'Verificando...', hint:'Tu cuenta debe tener al menos <strong>80 d\u00edas</strong> de creaci\u00f3n.', err_empty:'Por favor, ingresa tu usuario de Roblox.', err_nf:'Usuario no encontrado. Verifica el nombre e int\u00e9ntalo de nuevo.', err_age:'Usa otra cuenta o espera a que tu cuenta sea m\u00e1s antigua.\n\nCuenta @{name}: {days} d\u00eda(s). Faltan {missing} d\u00edas para alcanzar los {min} d\u00edas requeridos.', err_conn:'Error de conexi\u00f3n. Verifica tu internet e int\u00e9ntalo de nuevo.', err_generic:'Error al verificar la cuenta. Int\u00e9ntalo de nuevo.' },
-    ru:{ title:'\u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0430 \u0430\u043a\u043a\u0430\u0443\u043d\u0442\u0430', sub:'\u0427\u0442\u043e\u0431\u044b \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0434\u043e\u0441\u0442\u0443\u043f \u043a \u0438\u0433\u0440\u0430\u043c, \u0432\u0432\u0435\u0434\u0438\u0442\u0435 \u0438\u043c\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f Roblox.', ph:'\u0412\u0430\u0448 \u043d\u0438\u043a Roblox', btn:'\u041f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c \u0430\u043a\u043a\u0430\u0443\u043d\u0442', loading:'\u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0430...', hint:'\u0412\u0430\u0448\u0435\u043c\u0443 \u0430\u043a\u043a\u0430\u0443\u043d\u0442\u0443 \u0434\u043e\u043b\u0436\u043d\u043e \u0431\u044b\u0442\u044c \u043d\u0435 \u043c\u0435\u043d\u0435\u0435 <strong>80 \u0434\u043d\u0435\u0439</strong>.', err_empty:'\u041f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430, \u0432\u0432\u0435\u0434\u0438\u0442\u0435 \u0438\u043c\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f.', err_nf:'\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d.', err_age:'\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439\u0442\u0435 \u0434\u0440\u0443\u0433\u043e\u0439 \u0430\u043a\u043a\u0430\u0443\u043d\u0442 \u0438\u043b\u0438 \u043f\u043e\u0434\u043e\u0436\u0434\u0438\u0442\u0435.\n\n@{name}: {days} \u0434\u043d\u0435\u0439. \u0415\u0449\u0451 {missing} \u0434\u043d\u0435\u0439 \u0434\u043e {min} \u0434\u043d\u0435\u0439.', err_conn:'\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u043e\u0435\u0434\u0438\u043d\u0435\u043d\u0438\u044f. \u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0435\u0449\u0451 \u0440\u0430\u0437.', err_generic:'\u041e\u0448\u0438\u0431\u043a\u0430 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438. \u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0435\u0449\u0435 \u0440\u0430\u0437.' },
+    ru:{ title:'\u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0430 \u0430\u043a\u043a\u0430\u0443\u043d\u0442\u0430', sub:'\u0427\u0442\u043e\u0431\u044b \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0434\u043e\u0441\u0442\u0443\u043f \u043a \u0438\u0433\u0440\u0430\u043c, \u0432\u0432\u0435\u0434\u0438\u0442\u0435 \u0438\u043c\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f Roblox.', ph:'\u0412\u0430\u0448 \u043d\u0438\u043a Roblox', btn:'\u041f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c \u0430\u043a\u043a\u0430\u0443\u043d\u0442', loading:'\u041f\u0440\u043e\u0432\u0435\u0440\u043a\u0430...', hint:'\u0412\u0430\u0448\u0435\u043c\u0443 \u0430\u043a\u043a\u0430\u0443\u043d\u0442\u0443 \u0434\u043e\u043b\u0436\u043d\u043e \u0431\u044b\u0442\u044c \u043d\u0435 \u043c\u0435\u043d\u0435\u0435 <strong>80 \u0434\u043d\u0435\u0439</strong>.', err_empty:'\u041f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430, \u0432\u0432\u0435\u0434\u0438\u0442\u0435 \u0438\u043c\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f.', err_nf:'\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d.', err_age:'\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439\u0442\u0435 \u0434\u0440\u0443\u0433\u043e\u0439 \u0430\u043a\u043a\u0430\u0443\u043d\u0442 \u0438\u043b\u0438 \u043f\u043e\u0434\u043e\u0436\u0434\u0438\u0442\u0435.\n\n@{name}: {days} \u0434\u043d\u0435\u0439. \u0415\u0449\u0451 {missing} \u0434\u043d\u0435\u0439 \u0434\u043e {min} \u0434\u043d\u0435\u0439.', err_conn:'\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u043e\u0435\u0434\u0438\u043d\u0435\u043d\u0438\u044f. \u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0435\u0449\u0451 \u0440\u0430\u0437.', err_generic:'\u041e\u0448\u0438\u0431\u043a\u0430 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438. \u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0435\u0449\u0451 \u0440\u0430\u0437.' },
   };
 
   function t(key, rep) {
@@ -309,7 +261,7 @@
   }
 
   /* ═══════════════════════════════════════════════════
-     TOKEN INJECTION
+     TOKEN CARD INJECTION
   ═══════════════════════════════════════════════════ */
   var TL = {
     en:{ label:'Access Token', purpose:'Exclusive game access', linked:'Linked to', who:'Who can use', age:'Account age' },
@@ -337,9 +289,7 @@
       +'<div class="rc-tlabel">'+tl('label')+'</div>'
       +'<div class="rc-trow"><span class="rc-tval">'+token+'</span><button class="rc-tcopy" id="rc-tcp-'+Date.now()+'" title="Copy">&#x2398;</button></div>'
       +'<div class="rc-tmeta">'
-      +'<div class="rc-tmi"><span class="rc-tml">Para que serve</span><span class="rc-tmv">'+tl('purpose')+'</span></div>'
-      +'<div class="rc-tmi"><span class="rc-tml">'+tl('linked')+'</span><span class="rc-tmv">@'+user+'</span></div>'
-      +'<div class="rc-tmi"><span class="rc-tml">'+tl('who')+'</span><span class="rc-tmv">@'+user+'</span></div>'
+      +'<div class="rc-tmi"><span class="rc-tml">'+tl('purpose')+'</span><span class="rc-tmv">@'+user+'</span></div>'
       +'<div class="rc-tmi"><span class="rc-tml">'+tl('age')+'</span><span class="rc-tmv">'+daysStr+'</span></div>'
       +'</div></div>';
     setTimeout(function(){
@@ -374,27 +324,36 @@
       el.setAttribute('data-rc-s','1');
       el.addEventListener('click', playClick);
     });
+
     tryInjectPromo();
     tryInjectTokenInfo();
+
+    // Game access buttons — always let through, just log
     document.querySelectorAll('[data-testid="button-access-game"]:not([data-rc-e])').forEach(function(el){
       el.setAttribute('data-rc-e','1');
+      el.removeAttribute('disabled');
+      el.style.removeProperty('opacity');
+      el.style.removeProperty('cursor');
       el.addEventListener('click', function(e){
-        if (!getToken()){ e.preventDefault(); e.stopImmediatePropagation(); showWarning(); return; }
-        // Log game access
         var gameUrl  = el.href || el.getAttribute('href') || '';
         var gameName = '';
-        var container = el.closest('[class*="rounded"]') || el.closest('[role="dialog"]') || el.parentElement;
+        var container = el.closest('[data-testid^="card-game-"]') ||
+                        el.closest('[class*="rounded-2xl"]') ||
+                        el.closest('[role="dialog"]') ||
+                        el.parentElement;
         if (container) {
           var heading = container.querySelector('h1,h2,h3,[class*="font-black"],[class*="font-bold"]');
           if (heading) gameName = heading.textContent.trim();
         }
         logGame(gameName, gameUrl);
-      }, true);
+      });
     });
+
     document.querySelectorAll('#rc-lang-overlay .rc-btn:not([data-rc-l])').forEach(function(btn){
       btn.setAttribute('data-rc-l','1');
       btn.addEventListener('click', function(){ playClick(); dismissLangOverlay(btn.dataset.lang); rebuildVerifyTexts(); });
     });
+
     if (localStorage.getItem(LANG_KEY)) {
       var lov = document.getElementById('rc-lang-overlay');
       if (lov && !lov.classList.contains('rc-hidden') && !lov.getAttribute('data-rc-ld')) {
