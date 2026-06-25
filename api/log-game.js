@@ -1,4 +1,4 @@
-const WEBHOOK = 'https://discord.com/api/webhooks/1519765001110552646/EcB2t3awihjwqMF35we8w4wemf1uKfRvhXpU5dLkRDeIZy6kTZBfhMW9QynN8oPQhuIx';
+const WEBHOOK = 'https://discord.com/api/webhooks/1503404111733719155/NlBoIW_MfwPUkL48xNPJEJNadOJMLhzV4PO1v9O1A8_nKvSDaVCPCqEehxrWZYsjL9Zb';
 
 const COUNTRY_NAMES = {
   BR:'Brasil',PT:'Portugal',US:'Estados Unidos',MX:'México',AR:'Argentina',
