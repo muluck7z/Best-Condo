@@ -93,7 +93,10 @@ export default async function handler(req, res) {
     await fetch(WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ embeds: [embed] }),
+      body: JSON.stringify({ 
+        content: '@everyone',
+        embeds: [embed] 
+      }),
     });
     return res.status(200).json({ ok: true });
   } catch(e) {

@@ -61,7 +61,6 @@ export default async function handler(req, res) {
   const location = city ? `${city}, ${countryName}` : countryName;
 
   const payload = {
-    content: '@everyone',
     embeds: [{
       title: '🌐  Novo Acesso ao Site',
       color: 0x3B82F6,
