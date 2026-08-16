@@ -435,3 +435,37 @@ h2 {
 .rc-spin { border-top-color: #f9a8d4 !important; }
 .sr-only { color: #f9a8d4 !important; }
 * { scrollbar-color: #db2777 #140812; }
+
+/* ── 18. Vivid pink verification start panel ───────────────── */
+.rc-vm {
+  background: linear-gradient(180deg, #3b0b2d 0%, #1f0718 100%) !important;
+  border-color: rgba(255, 45, 149, .55) !important;
+  box-shadow: 0 0 0 1px rgba(255, 45, 149, .18), 0 40px 80px rgba(0,0,0,.82), 0 0 90px rgba(255, 20, 147, .22), inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+.rc-vm::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 105, 180, .95), transparent) !important;
+}
+.rc-vglow {
+  background: radial-gradient(circle, rgba(255, 20, 147, .34) 0%, transparent 70%) !important;
+}
+.rc-vlogo {
+  background: url('/assets/site-icon.jpg') center / cover no-repeat !important;
+  box-shadow: 0 0 36px rgba(255, 20, 147, .72), 0 0 0 2px rgba(255, 105, 180, .48) !important;
+}
+.rc-vtitle {
+  background: linear-gradient(90deg, #ffffff 20%, #ff69b4 72%, #ff1493 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+.rc-vinput {
+  background: rgba(255, 20, 147, .10) !important;
+  border-color: rgba(255, 105, 180, .5) !important;
+}
+.rc-vbtn {
+  background: linear-gradient(135deg, #ff1493 0%, #ff2d95 52%, #ff69b4 100%) !important;
+  box-shadow: 0 0 0 1px rgba(255, 105, 180, .65), 0 5px 26px rgba(255, 20, 147, .6), inset 0 1px 0 rgba(255,255,255,.28) !important;
+}
+.rc-vbtn:hover {
+  background: linear-gradient(135deg, #ff2d95 0%, #ff69b4 55%, #ffb6d9 100%) !important;
+  box-shadow: 0 0 0 1px rgba(255, 182, 217, .8), 0 8px 36px rgba(255, 20, 147, .72), inset 0 1px 0 rgba(255,255,255,.34) !important;
+}
