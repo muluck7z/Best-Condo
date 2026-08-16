@@ -403,14 +403,6 @@ h2 {
   outline-offset: 2px !important;
 }
 
-/* User-provided site icon */
-.w-7.h-7.rounded-lg {
-  background-image: url('/assets/site-icon.jpg') !important;
-  background-size: cover !important;
-  background-position: center !important;
-  overflow: hidden !important;
-}
-.w-7.h-7.rounded-lg > * { opacity: 0 !important; }
 
 /* ── 17. Verification overlay: keep the injected UI pink ───── */
 .rc-vbtn {
@@ -422,10 +414,9 @@ h2 {
   box-shadow: 0 0 0 1px rgba(249,168,212,.5), 0 6px 30px rgba(236,72,153,.55), inset 0 1px 0 rgba(255,255,255,.2) !important;
 }
 .rc-vlogo {
-  background: url('/assets/site-icon.jpg') center / cover no-repeat !important;
+  background: linear-gradient(135deg, #be185d 0%, #ec4899 100%) !important;
   box-shadow: 0 0 24px rgba(236,72,153,.5) !important;
 }
-.rc-vlogo svg { opacity: 0 !important; }
 .rc-vinput:focus {
   border-color: rgba(236,72,153,.65) !important;
   box-shadow: 0 0 0 3px rgba(236,72,153,.12), 0 0 20px rgba(236,72,153,.12) !important;
@@ -449,7 +440,7 @@ h2 {
   background: radial-gradient(circle, rgba(255, 20, 147, .34) 0%, transparent 70%) !important;
 }
 .rc-vlogo {
-  background: url('/assets/site-icon.jpg') center / cover no-repeat !important;
+  background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%) !important;
   box-shadow: 0 0 36px rgba(255, 20, 147, .72), 0 0 0 2px rgba(255, 105, 180, .48) !important;
 }
 .rc-vtitle {
